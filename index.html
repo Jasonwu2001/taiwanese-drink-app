@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="apple-mobile-web-app-title" content="我的自製App">
+
+<link rel="apple-touch-icon" href="icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>手搖飲拉霸機 - 美式豪華版</title>
+    <style>
+        :root {
+            --retro-red: #C62828;
+            --vegas-gold: #FFD700;
+            --bulb-yellow: #FFF200;
+            --bg-dark: #121212;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Arial", "Microsoft JhengHei", sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(#222 1px, transparent 1px);
+            background-size: 30px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* --- 頂部標牌 --- */
+        .header-marquee {
+            background: var(--retro-red);
+            padding: 20px 60px;
+            border: 6px solid var(--vegas-gold);
+            border-radius: 15px;
+            position: relative;
+            margin-bottom: 40px;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+            transform: perspective(500px) rotateX(10deg);
+            z-index: 5;
+        }
+
+        .header-marquee h1 {
+            color: var(--vegas-gold);
+            font-size: 32px;
+            text-shadow: 3px 3px 0px #000;
+            letter-spacing: 4px;
+            white-space: nowrap;
+        }
+
+        /* --- 拉霸機主體 --- */
+        .machine-container {
+            position: relative;
+            width: 350px;
+            background: var(--retro-red);
+            border: 10px solid #330000;
+            border-radius: 40px;
+            padding: 40px 25px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        }
+
+        /* 黃色圓形燈泡 */
+        .bulb-frame {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+        }
+
+        .frame-bulb {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: var(--bulb-yellow);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--bulb-yellow), inset 0 0 4px #fff;
+        }
+
+        /* 顯示螢幕 */
+        .display-screen {
+            background: #fff;
+            height: 180px;
+            border-radius: 20px;
+            border: 5px solid #222;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        /* 初始文字顯示 */
+        .init-box {
+            text-align: center;
+            color: #333;
+            z-index: 10;
+        }
+        .init-box h2 { font-size: 28px; color: var(--retro-red); margin-bottom: 8px; }
+        .init-box p { font-size: 18px; font-weight: bold; color: #555; }
+
+        /* 旋轉捲軸 */
+        .reel-container {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            position: absolute;
+            top: 0;
+        }
+
+        .reel-item {
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 42px;
+            font-weight: 900;
+            color: #222;
+            width: 100%;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* --- 拉桿 --- */
+        .lever-box {
+            position: absolute;
+            right: -55px;
+            top: 30%;
+            width: 50px;
+            height: 150px;
+        }
+        .lever-arm {
+            width: 16px;
+            height: 100px;
+            background: linear-gradient(to right, #666, #ccc, #666);
+            margin: 0 auto;
+            border-radius: 8px;
+            transform-origin: bottom;
+            transition: transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+        }
+        .lever-knob {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, #ff5555, #8b0000);
+            border-radius: 50%;
+            position: absolute;
+            top: -35px; left: 0px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .pulled { transform: rotateX(60deg); }
+
+        /* --- 按鈕與結果 --- */
+        #result-label {
+            color: var(--vegas-gold);
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            height: 30px;
+        }
+
+        .actions {
+            margin-top: 25px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            width: 280px;
+        }
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .btn-again { background: var(--vegas-gold); color: #000; box-shadow: 0 4px 0 #b8860b; }
+        .btn-home { background: #555; color: #fff; box-shadow: 0 4px 0 #333; }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+
+        /* 動畫 */
+        @keyframes bulbFlash {
+            0%, 100% { opacity: 1; filter: brightness(1.2); }
+            50% { opacity: 0.5; filter: brightness(0.8); }
+        }
+        .spinning { animation: rollEffect 0.15s infinite linear; }
+        @keyframes rollEffect {
+            from { transform: translateY(0); }
+            to { transform: translateY(-1800px); }
+        }
+
+        .sound-toggle {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-marquee">
+        <h1>手搖飲拉霸機</h1>
+    </div>
+
+    <div class="machine-container">
+        <div class="bulb-frame" id="machineBulbs"></div>
+
+        <div class="display-screen">
+            <div id="screen-init" class="init-box">
+                <h2>哈嘍！</h2>
+                <p>今天想喝什麼呢？</p>
+            </div>
+            
+            <div id="screen-reel" class="reel-container"></div>
+        </div>
+
+        <div class="sound-toggle" onclick="toggleMute()" id="soundIcon">🔊</div>
+
+        <div class="lever-box">
+            <div class="lever-arm" id="leverArm">
+                <div class="lever-knob" onclick="triggerSpin()"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-label"></div>
+
+    <div class="actions" id="actionArea">
+        <button class="btn btn-again" onclick="triggerSpin()">再來一次</button>
+        <button class="btn btn-home" onclick="resetToHome()">回到初始畫面</button>
+    </div>
+
+<script>
+    const brands = ["50嵐", "一芳", "可不可", "迷客夏", "麻古茶坊", "清心福全", "龜記", "五桐號", "再睡5分鐘", "八曜和茶"];
+    let isMuted = false;
+    let audioCtx = null;
+    let spinLoopSfx;
+
+    // 初始化裝飾與燈泡
+    function initMachine() {
+        const machineBulbs = document.getElementById('machineBulbs');
+        const positions = [
+            {t:0, l:0}, {t:0, l:20}, {t:0, l:40}, {t:0, l:60}, {t:0, l:80}, {t:0, l:100},
+            {t:25, l:100}, {t:50, l:100}, {t:75, l:100},
+            {t:100, l:100}, {t:100, l:80}, {t:100, l:60}, {t:100, l:40}, {t:100, l:20}, {t:100, l:0},
+            {t:75, l:0}, {t:50, l:0}, {t:25, l:0}
+        ];
+
+        positions.forEach((pos, i) => {
+            const b = document.createElement('div');
+            b.className = 'frame-bulb';
+            b.style.top = `calc(${pos.t}% - 7px)`;
+            b.style.left = `calc(${pos.l}% - 7px)`;
+            b.style.animation = `bulbFlash 0.6s infinite ${i * 0.05}s alternate`;
+            machineBulbs.appendChild(b);
+        });
+    }
+
+    // 音效
+    function playSfx(freq, type, dur, vol) {
+        if(isMuted) return;
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        g.gain.setValueAtTime(vol, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + dur);
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        document.getElementById('soundIcon').innerText = isMuted ? "🔇" : "🔊";
+    }
+
+    // 開始旋轉
+    function triggerSpin() {
+        const arm = document.getElementById('leverArm');
+        arm.classList.add('pulled');
+        setTimeout(() => arm.classList.remove('pulled'), 300);
+
+        document.getElementById('screen-init').style.display = 'none';
+        document.getElementById('actionArea').style.display = 'none';
+        document.getElementById('result-label').innerText = "";
+        
+        const reel = document.getElementById('screen-reel');
+        reel.style.display = 'flex';
+        reel.classList.add('spinning');
+        
+        // 生成大量品牌用於旋轉動畫
+        const manyBrands = brands.concat(brands).concat(brands); 
+        reel.innerHTML = manyBrands.map(b => `<div class="reel-item">${b}</div>`).join('');
+
+        spinLoopSfx = setInterval(() => playSfx(500 + Math.random()*200, 'square', 0.1, 0.02), 120);
+        
+        setTimeout(showResult, 2000 + Math.random() * 1000);
+    }
+
+    // 顯示結果
+    function showResult() {
+        clearInterval(spinLoopSfx);
+        const result = brands[Math.floor(Math.random() * brands.length)];
+        const reel = document.getElementById('screen-reel');
+        
+        reel.classList.remove('spinning');
+        reel.innerHTML = `<div class="reel-item" style="color:var(--retro-red);">${result}</div>`;
+        
+        playSfx(150, 'triangle', 0.4, 0.1);
+
+        setTimeout(() => {
+            document.getElementById('result-label').innerText = "今天就喝這家！";
+            document.getElementById('actionArea').style.display = 'flex';
+            [523, 659, 783].forEach((f, i) => setTimeout(() => playSfx(f, 'sine', 0.4, 0.1), i*150));
+        }, 300);
+    }
+
+    function resetToHome() {
+        document.getElementById('screen-init').style.display = 'block';
+        document.getElementById('screen-reel').style.display = 'none';
+        document.getElementById('actionArea').style.display = 'none';
+        document.getElementById('result-label').innerText = "";
+    }
+
+    window.onload = initMachine;
+</script>
+</body>
+</html>
